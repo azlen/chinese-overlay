@@ -1,0 +1,239 @@
+<html>
+<head>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden
+    }
+
+    body {
+      box-sizing: border-box;
+      border: 3px solid;
+      border-radius: 5px;
+      border-image-slice: 1; 
+      border-image-source: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0), rgba(255,255,255,0), rgba(255,255,255,0),#FFFFFF);
+      
+    }
+
+    .language-widget {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+
+      /* background: #FFFFFF; */
+      border-radius: 3px;
+      color: #999999;
+      /* padding: 10px 20px; */
+      font-family:"Fira Code", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      
+      text-align: right;
+      height: 100%;
+    }
+
+    .word {
+      font-size: 100px;
+      text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.4), 0px 3px 10px rgba(0, 0, 0, 0.2);
+      color: #FFFFFF;
+      /* -webkit-text-stroke-width: 5px; */
+  /* -webkit-text-stroke-color: black; */
+  text-shadow:
+   -1px -1px 0 #000,  
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+     1px 1px 0 #000,
+     0px 1px 3px rgba(0, 0, 0, 0.4), 0px 3px 10px rgba(0, 0, 0, 0.2);
+
+     position: absolute;
+     top: 30px;
+     right: 30px;
+    }
+
+    .pinyin {
+      font-weight: bold;
+    }
+
+
+
+    .definition {
+      margin-top: 20px;
+      font-size: 10pt;
+      white-space:pre-wrap;
+      width: 500px;
+      /* word-break:brea */
+    }
+
+    .bottom {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      max-width: 500px;
+    }
+
+    .current-task {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      
+      font-family: "Fira Code";
+      background: transparent;
+      color: #FFFFFF;
+      font-size: 50px;
+      font-weight: bold;
+      text-transform: uppercase;
+      opacity: 0.2;
+      /* -webkit-text-stroke-width: 1px;
+   -webkit-text-stroke-color: black;  */
+   text-shadow:
+   -1px -1px 0 #000,  
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+     1px 1px 0 #000,
+     0px 1px 3px rgba(0, 0, 0, 0.4), 0px 3px 10px rgba(0, 0, 0, 0.2);
+
+      animation: pulse 10s infinite;
+    }
+
+    .ctt {
+      /* content: "currently working on"; */
+      position: absolute;
+      /* top: 0px; */
+      color: #999999;
+      font-size: 20px;
+      /* width: 200px;
+      height: 200px;
+      background: #FF0000; */
+      font-family: "Fira Code";
+      font-size: 10pt;
+      /* font-weight: bold; */
+      bottom: 100px;
+      left: 50px;
+      opacity: 0.8;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.2 }
+      50% { opacity: 0.8 }
+      100% { opacity: 0.2 }
+    }
+  </style>
+</head>
+<body>
+  
+  
+  <script src="lib.js"></script>
+  <!-- <script src="main.js"></script> -->
+  <script>
+    let delay = 1000*60*4; // seconds to change chinese characters
+
+    // let draggable;
+    // (function() {
+    //     let _dragging;
+
+    //     draggable = () => {
+    //         return {
+    //             'onmousedown': function(e) {
+    //                 _dragging = {
+    //                     element: this,
+    //                     bbox: this.getBoundingClientRect(),
+    //                     start: {
+    //                         x: e.clientX,
+    //                         y: e.clientY
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     window.addEventListener('mousemove', function(e) {
+    //         if(_dragging) {
+    //             let pos = {
+    //                 x: _dragging.start.x - e.clientX + bbox.x,
+    //                 y: _dragging.start.y - e.clientY + bbox.y,
+    //             }
+    //             _dragging.element.style.setProperty('transform', `translate(${pos.x}px, ${pos.y}px)`)
+    //         }
+    //     })
+    // })()
+
+    let value = createNode(Number(localStorage.getItem('value')) || 0)
+    value.listen('content', () => localStorage.setItem('value', value.get()))
+
+    value.set(value.get() + 1)
+
+    // value.set(value.get() + 1)
+
+    function randint(a,b) {
+      return Math.floor(Math.random() * (b - a + 1))
+    }
+
+    function choose(A) {
+      return A[randint(0, A.length-1)]
+    }
+
+    let word = createNode('')
+    let pinyin = createNode('')
+    let definition = createNode('')
+
+    let proximity = createNode(0)
+
+    ;(function() {
+      let lastUpdate;
+      let data;
+
+      window.regenerate = function() {
+          let simplified = choose(Object.keys(data))
+          let word_data = data[simplified]
+
+          word.set(simplified)
+          pinyin.set(Array.from(new Set(word_data.map(x => x.pinyin))).join(' / '))
+          // pinyin.set(word_data.map(x => x.pinyin).join('/'))
+          definition.set(word_data.map(x => x.meanings.join(' / ')).reverse().join('\n\n'))
+
+          lastUpdate = Date.now()
+      }
+
+      fetch('./chinese.json').then(res => {
+          return res.json()
+      }).then(j => {
+        data = j
+        regenerate()
+      })
+
+      function updateLoop() {
+        requestAnimationFrame(updateLoop)
+
+        proximity.set((Date.now() - lastUpdate) / delay)
+        
+        if(Date.now() - lastUpdate > delay) {
+          regenerate()
+        } 
+      }
+      updateLoop()
+    })()
+
+    let task = createNode(localStorage.getItem('task') || 'programming')
+    task.listen('content', () => localStorage.setItem('task', task.get()))
+
+    let doc =
+    h('div.app', [
+        h('div.ctt', 'currently working on'),
+        h('input.current-task', bindinput(task)),
+
+        h('div.language-widget', { 'ondblclick': () => regenerate() }, [
+            // calc(() => `version ${value.get()}`), h('br'),
+            h('div.word', {style: {color: calc(() => `hsl(150, 100%, ${100-proximity.get()*60}%)`)}}, word),
+            h('div.bottom', [
+              h('div.pinyin', pinyin),
+              h('div.definition', definition),
+            ])
+            
+        ])
+    ])
+
+    document.body.appendChild(doc)
+  </script>
+</body>
+</html>
