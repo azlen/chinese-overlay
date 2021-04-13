@@ -10,7 +10,7 @@ First install Go
 Then install topframe
 ```$ GOBIN=/usr/local/bin go get github.com/progrium/topframe```
 
-Then clone this repo into `~/.topframe
+Then clone this repo into `~/.topframe`
 ```git clone git@github.com:azlen/chinese-overlay.git ~/.topframe```
 
 Launch on startup
